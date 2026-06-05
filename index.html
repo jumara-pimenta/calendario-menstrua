@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MENSTRUA — Calendário de Ações</title>
+<style>
+  :root {
+    --rosa:        #e8568a;
+    --rosa-escuro: #c23b6e;
+    --vinho:       #7a1f43;
+    --coral:       #ff7a59;
+    --creme:       #fff5f7;
+    --cinza:       #6b6b6b;
+    --cinza-claro: #ededed;
+    --confirmada:  #2faf6b;
+    --aconfirmar:  #f0a500;
+
+    /* cores por tipo de local */
+    --rua:          #5b8def;
+    --universidade: #9b59d0;
+    --indigena:     #2faf6b;
+    --centropop:    #e8568a;
+    --outro:        #ff7a59;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+    background: linear-gradient(160deg, #fff5f7 0%, #fde8ef 100%);
+    color: #2b2b2b;
+    line-height: 1.5;
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  /* ---------- Cabeçalho ---------- */
+  header {
+    background: linear-gradient(120deg, var(--vinho), var(--rosa) 70%, var(--coral));
+    color: #fff;
+    padding: 38px 20px 30px;
+    text-align: center;
+    box-shadow: 0 6px 20px rgba(122,31,67,.25);
+    border-radius: 0 0 26px 26px;
+    position: relative;
+  }
+  header .logo {
+    font-size: 2.5rem;
+    font-weight: 800;
+    letter-spacing: 3px;
+  }
+  header .logo span { font-weight: 300; }
+  header .sub {
+    font-size: 1.05rem;
+    opacity: .95;
+    margin-top: 6px;
+  }
+  header .drop {
+    display: inline-block;
+    margin-bottom: 4px;
+    font-size: 1.6rem;
+  }
+  /* botões do topo (login / nova atividade / sair) */
+  .topo-controles {
+    position: absolute;
+    top: 16px; right: 16px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .btn-top {
+    background: rgba(255,255,255,.18);
+    border: 1px solid rgba(255,255,255,.5);
+    color: #fff;
+    padding: 7px 14px;
+    border-radius: 30px;
+    font-size: .82rem;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    transition: background .15s;
+  }
+  .btn-top:hover { background: rgba(255,255,255,.32); }
+  #btnNovaAtividade { background: rgba(255,255,255,.92); color: var(--rosa-escuro); font-weight: 700; }
+  #btnNovaAtividade:hover { background: #fff; }
+
+  .wrap {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 16px;
+  }
+
+  /* aviso de status de conexão */
+  .aviso {
+    text-align: center;
+    font-size: .85rem;
+    margin: 16px auto 0;
+    padding: 10px 14px;
+    border-radius: 12px;
+    max-width: 720px;
+  }
+  .aviso.demo { background: #fff3cd; color: #8a6d00; }
+  .aviso.online { background: #e3f9ee; color: #1d7a4d; }
+
+  /* ---------- Legenda ---------- */
+  .legenda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    justify-content: center;
+    margin: 20px 0 8px;
+  }
+  .legenda .item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: .9rem;
+    background: #fff;
+    padding: 6px 13px;
+    border-radius: 30px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.06);
+  }
+  .dot { width: 13px; height: 13px; border-radius: 50%; flex: 0 0 auto; }
+
+  /* ---------- Navegação de mês ---------- */
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    margin: 26px 0 14px;
+  }
+  .nav button {
+    background: #fff;
+    border: none;
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    font-size: 1.3rem;
+    color: var(--rosa-escuro);
+    cursor: pointer;
+    box-shadow: 0 3px 8px rgba(0,0,0,.1);
+    transition: transform .15s, background .15s;
+  }
+  .nav button:hover { background: var(--rosa); color:#fff; transform: scale(1.08); }
+  .nav h2 {
+    font-size: 1.5rem;
+    color: var(--vinho);
+    min-width: 230px;
+    text-align: center;
+    text-transform: capitalize;
+  }
+
+  /* ---------- Calendário ---------- */
+  .calendario {
+    background: #fff;
+    border-radius: 20px;
+    padding: 16px;
+    box-shadow: 0 10px 30px rgba(122,31,67,.1);
+  }
+  .grade-dias, .grade {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+  }
+  .grade-dias div {
+    text-align: center;
+    font-weight: 700;
+    font-size: .8rem;
+    color: var(--cinza);
+    padding: 6px 0;
+    text-transform: uppercase;
+  }
+  .celula {
+    min-height: 92px;
+    border-radius: 12px;
+    background: #faf7f8;
+    padding: 6px;
+    border: 1.5px solid transparent;
+    transition: border .15s;
+  }
+  .celula.vazia { background: transparent; }
+  .celula.hoje { border-color: var(--rosa); background: #fff0f5; }
+  .celula .num {
+    font-size: .82rem;
+    font-weight: 700;
+    color: var(--cinza);
+  }
+  .celula.hoje .num { color: var(--rosa-escuro); }
+  .ev {
+    margin-top: 4px;
+    font-size: .72rem;
+    color: #fff;
+    padding: 3px 6px;
+    border-radius: 7px;
+    line-height: 1.25;
+    cursor: default;
+    overflow: hidden;
+  }
+  .ev b { display: block; font-weight: 700; }
+
+  /* ---------- Listas (próximas + a confirmar) ---------- */
+  .secao-titulo {
+    font-size: 1.3rem;
+    color: var(--vinho);
+    margin: 34px 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 16px 16px 16px 20px;
+    box-shadow: 0 5px 16px rgba(0,0,0,.07);
+    position: relative;
+    overflow: hidden;
+    border-left: 6px solid var(--rosa);
+  }
+  .card .data-badge {
+    display: inline-block;
+    background: var(--creme);
+    color: var(--rosa-escuro);
+    font-weight: 700;
+    font-size: .85rem;
+    padding: 4px 10px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+  }
+  .card h3 { font-size: 1.12rem; color: var(--vinho); margin-bottom: 4px; }
+  .card .detalhes {
+    font-size: .86rem;
+    color: #555;
+    background: var(--creme);
+    border-radius: 10px;
+    padding: 8px 10px;
+    margin-top: 8px;
+    white-space: pre-wrap;
+    line-height: 1.45;
+  }
+  .card .linha {
+    font-size: .9rem;
+    color: var(--cinza);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 3px;
+  }
+  .tag {
+    display: inline-block;
+    font-size: .72rem;
+    font-weight: 700;
+    color: #fff;
+    padding: 3px 9px;
+    border-radius: 20px;
+    margin-top: 10px;
+  }
+  .tag.status-conf   { background: var(--confirmada); }
+  .tag.status-aconf  { background: var(--aconfirmar); }
+  .tag.tipo          { margin-left: 6px; opacity: .92; }
+
+  /* botão de excluir (só aparece no modo organizadora) */
+  .btn-excluir {
+    position: absolute;
+    top: 10px; right: 10px;
+    background: #ffe2e8;
+    color: var(--rosa-escuro);
+    border: none;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: .85rem;
+    line-height: 1;
+  }
+  .btn-excluir:hover { background: var(--rosa); color:#fff; }
+
+  /* cards/eventos clicáveis no modo organizadora */
+  .card.editavel { cursor: pointer; transition: transform .12s, box-shadow .12s; }
+  .card.editavel:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(122,31,67,.18); }
+  .ev.editavel { cursor: pointer; }
+  .ev.editavel:hover { filter: brightness(1.08); outline: 2px solid #fff; }
+
+  footer {
+    text-align: center;
+    margin-top: 40px;
+    color: var(--cinza);
+    font-size: .85rem;
+  }
+  footer .coracao { color: var(--rosa); }
+
+  /* ---------- Modal / painel da organizadora ---------- */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(50,10,25,.5);
+    z-index: 50;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 30px 14px;
+    overflow-y: auto;
+  }
+  .overlay.aberto { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 460px;
+    padding: 26px;
+    box-shadow: 0 20px 50px rgba(0,0,0,.3);
+    position: relative;
+  }
+  .modal h2 { color: var(--vinho); margin-bottom: 6px; font-size: 1.35rem; }
+  .modal p.dica { font-size: .85rem; color: var(--cinza); margin-bottom: 16px; }
+  .modal label {
+    display: block;
+    font-size: .82rem;
+    font-weight: 700;
+    color: var(--vinho);
+    margin: 12px 0 4px;
+  }
+  .modal input, .modal select, .modal textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid var(--cinza-claro);
+    border-radius: 10px;
+    font-size: .95rem;
+    font-family: inherit;
+  }
+  .modal textarea { resize: vertical; min-height: 64px; }
+  .modal input:focus, .modal select:focus, .modal textarea:focus { outline: none; border-color: var(--rosa); }
+  .modal .botoes { display: flex; gap: 10px; margin-top: 20px; }
+  .btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    font-size: .95rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-primario { background: var(--rosa); color: #fff; }
+  .btn-primario:hover { background: var(--rosa-escuro); }
+  .btn-secundario { background: var(--cinza-claro); color: #444; }
+  .btn-fechar {
+    position: absolute;
+    top: 14px; right: 16px;
+    background: none; border: none;
+    font-size: 1.4rem; color: #aaa; cursor: pointer;
+  }
+  .erro-senha { color: #d33; font-size: .85rem; margin-top: 8px; display: none; }
+  .seed-box {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--cinza-claro);
+    font-size: .82rem;
+    color: var(--cinza);
+  }
+  .seed-box button {
+    margin-top: 8px;
+    background: var(--coral);
+    color: #fff;
+    border: none;
+    padding: 9px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 700;
+  }
+
+  @media (max-width: 620px) {
+    .celula { min-height: 64px; }
+    .ev { font-size: .6rem; padding: 2px 4px; }
+    .ev .resp { display:none; }
+    header .logo { font-size: 2rem; }
+    .nav h2 { font-size: 1.2rem; min-width: 150px; }
+    .topo-controles { position: static; justify-content: center; margin-top: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="topo-controles">
+    <button class="btn-top" id="abrirAdmin">🔒 Login</button>
+    <button class="btn-top" id="btnNovaAtividade" style="display:none">➕ Nova atividade</button>
+    <button class="btn-top" id="btnSair" style="display:none">Sair</button>
+  </div>
+  <div class="drop">🩸</div>
+  <div class="logo">MENSTRUA</div>
+  <div class="sub" id="subtitulo">Calendário de Ações e Atividades</div>
+</header>
+
+<div class="wrap">
+
+  <div class="aviso" id="aviso" style="display:none"></div>
+
+  <div class="legenda" id="legenda"></div>
+
+  <div class="nav">
+    <button id="prev" aria-label="Mês anterior">‹</button>
+    <h2 id="mesAtual"></h2>
+    <button id="next" aria-label="Próximo mês">›</button>
+  </div>
+
+  <div class="calendario">
+    <div class="grade-dias">
+      <div>Dom</div><div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
+    </div>
+    <div class="grade" id="grade"></div>
+  </div>
+
+  <h2 class="secao-titulo">📅 Próximas ações confirmadas</h2>
+  <div class="cards" id="proximas"></div>
+
+  <h2 class="secao-titulo">⏳ Ações a confirmar</h2>
+  <div class="cards" id="aconfirmar"></div>
+
+  <footer>
+    Todos os direitos reservados | Projeto Menstrua
+    <br/>
+    <span id="atualizado"></span>
+  </footer>
+
+</div>
+
+<!-- ===================== MODAL: LOGIN DA ORGANIZADORA ===================== -->
+<div class="overlay" id="overlayLogin">
+  <div class="modal">
+    <button class="btn-fechar" data-fechar>×</button>
+    <h2>🔒Login</h2>
+    <p class="dica">Digite a senha para adicionar ou remover atividades.</p>
+    <label for="senha">Senha</label>
+    <input type="password" id="senha" placeholder="••••••••" />
+    <div class="erro-senha" id="erroSenha">Senha incorreta, tente novamente.</div>
+    <div class="botoes">
+      <button class="btn btn-secundario" data-fechar>Cancelar</button>
+      <button class="btn btn-primario" id="btnEntrar">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL: ADICIONAR ATIVIDADE ===================== -->
+<div class="overlay" id="overlayForm">
+  <div class="modal">
+    <button class="btn-fechar" data-fechar>×</button>
+    <h2 id="tituloForm">➕ Nova atividade</h2>
+    <p class="dica" id="dicaForm">Preencha e clique em salvar.</p>
+
+    <label for="f-cidade">Cidade / Local *</label>
+    <input type="text" id="f-cidade" placeholder="Ex: Manaus" />
+
+    <label for="f-local">Detalhe do lugar</label>
+    <input type="text" id="f-local" placeholder="Ex: UFAM, Rua, Praça..." />
+
+    <label for="f-data">Data <span style="font-weight:400;color:#999">(deixe vazio se for "a confirmar")</span></label>
+    <input type="date" id="f-data" />
+
+    <label for="f-hora">Hora <span style="font-weight:400;color:#999">(opcional)</span></label>
+    <input type="time" id="f-hora" />
+
+    <label for="f-tipo">Tipo de local</label>
+    <select id="f-tipo">
+      <option value="rua">Rua</option>
+      <option value="universidade">Universidade/Instituto</option>
+      <option value="indigena">Comunidade</option>
+      <option value="centropop">Escola</option>
+      <option value="outro">Outro</option>
+    </select>
+
+    <label for="f-responsavel">Responsável</label>
+    <input type="text" id="f-responsavel" placeholder="Ex: Drica" />
+
+    <label for="f-status">Status</label>
+    <select id="f-status">
+      <option value="confirmada">Confirmada</option>
+      <option value="aconfirmar">A confirmar</option>
+    </select>
+
+    <label for="f-detalhes">Detalhes da ação <span style="font-weight:400;color:#999">(opcional)</span></label>
+    <textarea id="f-detalhes" rows="3" placeholder="Ex: Distribuição de kits, roda de conversa, arrecadação, palestra..."></textarea>
+
+    <div class="botoes">
+      <button class="btn btn-secundario" data-fechar>Cancelar</button>
+      <button class="btn btn-primario" id="btnSalvar">Salvar atividade</button>
+    </div>
+
+    <div class="seed-box" id="seedBox" style="display:none">
+      Parece que o calendário online ainda está vazio. Quer trazer as atividades
+      iniciais do arquivo <b>dados.js</b> para o site?
+      <br/>
+      <button id="btnSeed">Importar atividades iniciais</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== Firebase (versão simples/compat) ===================== -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<!-- Seus arquivos -->
+<script src="dados.js"></script>
+<script src="firebase-config.js"></script>
+
+<script>
+/* ============================================================
+   CONFIGURAÇÕES DE EXIBIÇÃO
+   ============================================================ */
+const TIPOS = {
+  rua:          { nome: "Rua",                  cor: "var(--rua)" },
+  universidade: { nome: "Universidade/Instituto",         cor: "var(--universidade)" },
+  indigena:     { nome: "Comunidade",  cor: "var(--indigena)" },
+  centropop:    { nome: "Escola",           cor: "var(--centropop)" },
+  outro:        { nome: "Outro",                cor: "var(--outro)" }
+};
+const MESES = ["janeiro","fevereiro","março","abril","maio","junho",
+               "julho","agosto","setembro","outubro","novembro","dezembro"];
+
+/* Lista de atividades em memória (vem do Firebase OU do dados.js no modo demo) */
+let atividades = [];
+let modoAdmin = false;   // organizadora logada?
+let db = null;           // conexão Firebase
+let online = false;      // conectado ao Firebase?
+let editandoId = null;   // id da atividade em edição (null = criando nova)
+
+/* ============================================================
+   TÍTULOS / LEGENDA
+   ============================================================ */
+document.getElementById("subtitulo").textContent = PROJETO.subtitulo;
+document.getElementById("atualizado").textContent =
+  "Atualizado em " + (PROJETO.atualizadoEm || "");
+
+const legenda = document.getElementById("legenda");
+for (const k in TIPOS) {
+  const t = TIPOS[k];
+  legenda.insertAdjacentHTML("beforeend",
+    `<span class="item"><span class="dot" style="background:${t.cor}"></span>${t.nome}</span>`);
+}
+
+/* ============================================================
+   UTILIDADES DE DATA
+   ============================================================ */
+function parseData(s) {
+  if (!s) return null;
+  const [a,m,d] = s.split("-").map(Number);
+  return new Date(a, m - 1, d);
+}
+function formatarData(date) {
+  const dias = ["domingo","segunda","terça","quarta","quinta","sexta","sábado"];
+  return `${String(date.getDate()).padStart(2,"0")}/${String(date.getMonth()+1).padStart(2,"0")} · ${dias[date.getDay()]}`;
+}
+function corTipo(tipo){ return (TIPOS[tipo] || TIPOS.outro).cor; }
+function nomeTipo(tipo){ return (TIPOS[tipo] || TIPOS.outro).nome; }
+
+/* ============================================================
+   ESTADO DO MÊS EXIBIDO
+   ============================================================ */
+const hoje = new Date();
+let ref = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+
+function ajustarMesInicial() {
+  const fut = atividades
+    .filter(a => a.data)
+    .map(a => parseData(a.data))
+    .filter(d => d >= new Date(hoje.getFullYear(), hoje.getMonth(), 1))
+    .sort((a,b) => a-b)[0];
+  if (fut) ref = new Date(fut.getFullYear(), fut.getMonth(), 1);
+}
+
+/* ============================================================
+   RENDERIZAÇÃO
+   ============================================================ */
+function renderTudo() {
+  renderCalendario();
+  renderProximas();
+  renderAConfirmar();
+}
+
+function renderCalendario() {
+  const ano = ref.getFullYear(), mes = ref.getMonth();
+  document.getElementById("mesAtual").textContent = `${MESES[mes]} de ${ano}`;
+
+  const grade = document.getElementById("grade");
+  grade.innerHTML = "";
+  const comData = atividades.filter(a => a.data);
+
+  const primeiroDia = new Date(ano, mes, 1).getDay();
+  const totalDias = new Date(ano, mes + 1, 0).getDate();
+
+  for (let i = 0; i < primeiroDia; i++)
+    grade.insertAdjacentHTML("beforeend", `<div class="celula vazia"></div>`);
+
+  for (let dia = 1; dia <= totalDias; dia++) {
+    const ehHoje = (ano === hoje.getFullYear() && mes === hoje.getMonth() && dia === hoje.getDate());
+    const eventosDoDia = comData.filter(a => {
+      const d = parseData(a.data);
+      return d.getFullYear() === ano && d.getMonth() === mes && d.getDate() === dia;
+    });
+    let evHtml = "";
+    eventosDoDia.forEach(a => {
+      const podeEditar = modoAdmin && online && a.id;
+      evHtml += `<div class="ev ${podeEditar ? "editavel" : ""}" ${podeEditar ? `data-editar="${a.id}" title="Clique para editar"` : ""} style="background:${corTipo(a.tipo)}">
+                   <b>${a.hora ? escapeHtml(a.hora)+" " : ""}${escapeHtml(a.cidade)}</b>
+                   <span class="resp">${a.responsavel ? "👤 "+escapeHtml(a.responsavel) : nomeTipo(a.tipo)}</span>
+                 </div>`;
+    });
+    grade.insertAdjacentHTML("beforeend",
+      `<div class="celula ${ehHoje ? "hoje":""}">
+         <div class="num">${dia}</div>${evHtml}
+       </div>`);
+  }
+}
+
+function cardHtml(a) {
+  const dataBadge = a.data ? `<span class="data-badge">${formatarData(parseData(a.data))}</span>` : "";
+  const statusTag = a.status === "confirmada"
+    ? `<span class="tag status-conf">✔ Confirmada</span>`
+    : `<span class="tag status-aconf">⏳ A confirmar</span>`;
+  const podeEditar = modoAdmin && online && a.id;
+  const excluir = podeEditar
+    ? `<button class="btn-excluir" title="Excluir" data-excluir="${a.id}">×</button>` : "";
+  return `
+    <div class="card ${podeEditar ? "editavel" : ""}" ${podeEditar ? `data-editar="${a.id}" title="Clique para editar"` : ""} style="border-left-color:${corTipo(a.tipo)}">
+      ${excluir}
+      ${dataBadge}
+      <h3>${escapeHtml(a.cidade)}</h3>
+      ${a.hora ? `<div class="linha">🕒 ${escapeHtml(a.hora)}</div>` : ""}
+      ${a.local ? `<div class="linha">📍 ${escapeHtml(a.local)}</div>` : ""}
+      ${a.responsavel ? `<div class="linha">👤 ${escapeHtml(a.responsavel)}</div>` : ""}
+      ${a.detalhes ? `<div class="detalhes">📝 ${escapeHtml(a.detalhes)}</div>` : ""}
+      <div>
+        ${statusTag}
+        <span class="tag tipo" style="background:${corTipo(a.tipo)}">${nomeTipo(a.tipo)}</span>
+      </div>
+    </div>`;
+}
+
+function renderProximas() {
+  const cont = document.getElementById("proximas");
+  const lista = atividades
+    .filter(a => a.status === "confirmada" && a.data)
+    .sort((a,b) => parseData(a.data) - parseData(b.data));
+  cont.innerHTML = lista.length
+    ? lista.map(cardHtml).join("")
+    : "<p style='color:#999'>Nenhuma ação confirmada ainda.</p>";
+}
+
+function renderAConfirmar() {
+  const cont = document.getElementById("aconfirmar");
+  const lista = atividades.filter(a => a.status === "aconfirmar");
+  cont.innerHTML = lista.length
+    ? lista.map(cardHtml).join("")
+    : "<p style='color:#999'>Nenhuma ação pendente.</p>";
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c =>
+    ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]));
+}
+
+/* ============================================================
+   FIREBASE — conexão e tempo real
+   ============================================================ */
+function firebaseConfigurado() {
+  return typeof firebaseConfig !== "undefined"
+      && firebaseConfig.apiKey
+      && firebaseConfig.apiKey !== "COLE_AQUI";
+}
+
+function iniciar() {
+  if (firebaseConfigurado()) {
+    try {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+      online = true;
+      mostrarAviso("online");
+      // Escuta em TEMPO REAL: qualquer adição/remoção aparece para todas na hora.
+      db.collection("atividades").onSnapshot(snap => {
+        atividades = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        if (atividades.length) ajustarMesInicial();
+        renderTudo();
+        // mostra o convite de importação só se estiver vazio
+        document.getElementById("seedBox").style.display = atividades.length ? "none" : "block";
+      }, erro => {
+        console.error(erro);
+        usarModoDemo("Não consegui conectar ao banco. Confira as regras do Firestore.");
+      });
+    } catch (e) {
+      console.error(e);
+      usarModoDemo("Erro ao iniciar o Firebase. Confira o arquivo firebase-config.js.");
+    }
+  } else {
+    usarModoDemo();
+  }
+}
+
+function usarModoDemo(msgExtra) {
+  online = false;
+  atividades = (typeof ATIVIDADES !== "undefined") ? ATIVIDADES.slice() : [];
+  ajustarMesInicial();
+  renderTudo();
+  mostrarAviso("demo", msgExtra);
+}
+
+function mostrarAviso(tipo, msgExtra) {
+  const el = document.getElementById("aviso");
+  el.style.display = "block";
+  if (tipo === "online") {
+    el.className = "aviso online";
+    el.innerHTML = "🌐 Conectado ao calendário online — atualizações aparecem em tempo real.";
+  } else {
+    el.className = "aviso demo";
+    el.innerHTML = "⚙️ <b>Modo demonstração</b>: mostrando as atividades do arquivo dados.js. "
+      + "Para salvar online e atualizar para todas, configure o Firebase (veja CONFIGURAR-FIREBASE.md)."
+      + (msgExtra ? "<br/>" + escapeHtml(msgExtra) : "");
+  }
+}
+
+/* ============================================================
+   AÇÕES DA ORGANIZADORA (adicionar / excluir / importar)
+   ============================================================ */
+function salvarAtividade() {
+  const cidade = document.getElementById("f-cidade").value.trim();
+  if (!cidade) { alert("Por favor, preencha a cidade/local."); return; }
+
+  const nova = {
+    cidade,
+    local:       document.getElementById("f-local").value.trim(),
+    data:        document.getElementById("f-data").value, // "" ou "AAAA-MM-DD"
+    hora:        document.getElementById("f-hora").value, // "" ou "HH:MM"
+    tipo:        document.getElementById("f-tipo").value,
+    responsavel: document.getElementById("f-responsavel").value.trim(),
+    status:      document.getElementById("f-status").value,
+    detalhes:    document.getElementById("f-detalhes").value.trim(),
+    criadoEm:    Date.now()
+  };
+
+  if (!online) {
+    alert("O Firebase ainda não está configurado, então não dá para salvar online.\n\n"
+        + "Configure-o (CONFIGURAR-FIREBASE.md) ou adicione a atividade no arquivo dados.js.");
+    return;
+  }
+
+  let promessa;
+  if (editandoId) {
+    // Editando: atualiza a atividade existente (mantém o criadoEm original)
+    delete nova.criadoEm;
+    promessa = db.collection("atividades").doc(editandoId).update(nova);
+  } else {
+    // Criando nova
+    promessa = db.collection("atividades").add(nova);
+  }
+
+  promessa
+    .then(() => {
+      resetForm();
+      fecharTudo();
+    })
+    .catch(e => { console.error(e); alert("Não consegui salvar. Verifique sua conexão e as regras do Firestore."); });
+}
+
+/* Abre o formulário já preenchido para EDITAR uma atividade */
+function abrirFormEdicao(id) {
+  const a = atividades.find(x => x.id === id);
+  if (!a) return;
+  editandoId = id;
+  document.getElementById("f-cidade").value      = a.cidade || "";
+  document.getElementById("f-local").value       = a.local || "";
+  document.getElementById("f-data").value        = a.data || "";
+  document.getElementById("f-hora").value         = a.hora || "";
+  document.getElementById("f-tipo").value         = a.tipo || "rua";
+  document.getElementById("f-responsavel").value = a.responsavel || "";
+  document.getElementById("f-status").value      = a.status || "confirmada";
+  document.getElementById("f-detalhes").value    = a.detalhes || "";
+  document.getElementById("tituloForm").textContent = "✏️ Editar atividade";
+  document.getElementById("dicaForm").textContent   = "Altere o que precisar e clique em salvar.";
+  document.getElementById("btnSalvar").textContent  = "Salvar alterações";
+  document.getElementById("seedBox").style.display  = "none";
+  overlayForm.classList.add("aberto");
+}
+
+function excluirAtividade(id) {
+  if (!confirm("Tem certeza que deseja excluir esta atividade?")) return;
+  db.collection("atividades").doc(id).delete()
+    .catch(e => { console.error(e); alert("Não consegui excluir."); });
+}
+
+function importarIniciais() {
+  if (!online) return;
+  if (typeof ATIVIDADES === "undefined" || !ATIVIDADES.length) {
+    alert("Não encontrei atividades em dados.js."); return;
+  }
+  if (!confirm(`Importar ${ATIVIDADES.length} atividades iniciais para o site?`)) return;
+  const lote = db.batch();
+  ATIVIDADES.forEach(a => {
+    const ref = db.collection("atividades").doc();
+    lote.set(ref, { ...a, criadoEm: Date.now() });
+  });
+  lote.commit()
+    .then(() => alert("Atividades importadas! 🎉"))
+    .catch(e => { console.error(e); alert("Não consegui importar."); });
+}
+
+function resetForm() {
+  editandoId = null;
+  ["f-cidade","f-local","f-data","f-hora","f-responsavel","f-detalhes"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("f-tipo").value = "rua";
+  document.getElementById("f-status").value = "confirmada";
+  document.getElementById("tituloForm").textContent = "➕ Nova atividade";
+  document.getElementById("dicaForm").textContent   = "Preencha e clique em salvar.";
+  document.getElementById("btnSalvar").textContent  = "Salvar atividade";
+}
+
+/* ============================================================
+   CONTROLE DOS MODAIS
+   ============================================================ */
+const overlayLogin = document.getElementById("overlayLogin");
+const overlayForm  = document.getElementById("overlayForm");
+
+function fecharTudo() {
+  overlayLogin.classList.remove("aberto");
+  overlayForm.classList.remove("aberto");
+}
+
+/* Mostra/esconde os botões do topo conforme estiver logada ou não */
+function atualizarControles() {
+  document.getElementById("abrirAdmin").style.display       = modoAdmin ? "none" : "";
+  document.getElementById("btnNovaAtividade").style.display = modoAdmin ? "" : "none";
+  document.getElementById("btnSair").style.display          = modoAdmin ? "" : "none";
+}
+
+// Botão "Login": abre a tela de senha
+document.getElementById("abrirAdmin").onclick = () => {
+  document.getElementById("senha").value = "";
+  document.getElementById("erroSenha").style.display = "none";
+  overlayLogin.classList.add("aberto");
+  setTimeout(() => document.getElementById("senha").focus(), 100);
+};
+
+// Botão "Nova atividade": só aparece logada; abre o formulário em branco
+document.getElementById("btnNovaAtividade").onclick = () => {
+  resetForm();
+  overlayForm.classList.add("aberto");
+};
+
+// Botão "Sair": volta ao modo visitante
+document.getElementById("btnSair").onclick = () => {
+  modoAdmin = false;
+  fecharTudo();
+  atualizarControles();
+  renderTudo(); // esconde botões de excluir/editar
+};
+
+document.getElementById("btnEntrar").onclick = entrar;
+document.getElementById("senha").addEventListener("keydown", e => { if (e.key === "Enter") entrar(); });
+
+function entrar() {
+  const senha = document.getElementById("senha").value;
+  const correta = (typeof SENHA_ADMIN !== "undefined") ? SENHA_ADMIN : "menstrua2026";
+  if (senha === correta) {
+    modoAdmin = true;
+    overlayLogin.classList.remove("aberto");
+    atualizarControles();        // mostra "Nova atividade" e "Sair"
+    renderTudo();                // mostra botões de excluir/editar nos cards
+  } else {
+    document.getElementById("erroSenha").style.display = "block";
+  }
+}
+
+document.getElementById("btnSalvar").onclick = salvarAtividade;
+document.getElementById("btnSeed").onclick = importarIniciais;
+
+// botões de fechar (×, Cancelar) e clique fora do modal
+document.querySelectorAll("[data-fechar]").forEach(b => b.onclick = fecharTudo);
+[overlayLogin, overlayForm].forEach(ov => {
+  ov.addEventListener("click", e => { if (e.target === ov) fecharTudo(); });
+});
+
+// clique nos cards/eventos: excluir (botão ×) ou editar (resto do card)
+document.body.addEventListener("click", e => {
+  const btnExcluir = e.target.closest("[data-excluir]");
+  if (btnExcluir) {
+    e.stopPropagation();
+    excluirAtividade(btnExcluir.getAttribute("data-excluir"));
+    return;
+  }
+  const alvoEditar = e.target.closest("[data-editar]");
+  if (alvoEditar) abrirFormEdicao(alvoEditar.getAttribute("data-editar"));
+});
+
+/* ============================================================
+   NAVEGAÇÃO DE MÊS + INÍCIO
+   ============================================================ */
+document.getElementById("prev").onclick = () => { ref.setMonth(ref.getMonth()-1); renderCalendario(); };
+document.getElementById("next").onclick = () => { ref.setMonth(ref.getMonth()+1); renderCalendario(); };
+
+iniciar();
+</script>
+</body>
+</html>
