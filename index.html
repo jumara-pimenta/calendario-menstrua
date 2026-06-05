@@ -160,7 +160,7 @@
   }
   .grade-dias, .grade {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 6px;
   }
   .grade-dias div {
@@ -173,6 +173,7 @@
   }
   .celula {
     min-height: 92px;
+    min-width: 0;
     border-radius: 12px;
     background: #faf7f8;
     padding: 6px;
@@ -196,6 +197,8 @@
     line-height: 1.25;
     cursor: default;
     overflow: hidden;
+    word-break: break-word;
+    overflow-wrap: anywhere;
   }
   .ev b { display: block; font-weight: 700; }
 
@@ -374,12 +377,22 @@
   }
 
   @media (max-width: 620px) {
-    .celula { min-height: 64px; }
-    .ev { font-size: .6rem; padding: 2px 4px; }
+    .calendario { padding: 8px; }
+    .grade-dias, .grade { gap: 3px; }
+    .grade-dias div { font-size: .62rem; padding: 4px 0; }
+    .celula { min-height: 58px; padding: 3px; border-radius: 9px; }
+    .celula .num { font-size: .72rem; }
+    .ev { font-size: .56rem; padding: 2px 3px; border-radius: 5px; margin-top: 2px; }
     .ev .resp { display:none; }
     header .logo { font-size: 2rem; }
     .nav h2 { font-size: 1.2rem; min-width: 150px; }
     .topo-controles { position: static; justify-content: center; margin-top: 14px; }
+  }
+
+  @media (max-width: 380px) {
+    .grade-dias div { font-size: .55rem; }
+    .celula { min-height: 50px; }
+    .ev { font-size: .5rem; }
   }
 </style>
 </head>
