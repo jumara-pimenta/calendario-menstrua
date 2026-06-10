@@ -15,6 +15,7 @@
     --cinza-claro: #ededed;
     --confirmada:  #2faf6b;
     --aconfirmar:  #f0a500;
+    --realizada:   #6b7b8c;
 
     /* cores por tipo de local */
     --rua:          #5b8def;
@@ -265,7 +266,13 @@
   }
   .tag.status-conf   { background: var(--confirmada); }
   .tag.status-aconf  { background: var(--aconfirmar); }
+  .tag.status-real   { background: var(--realizada); }
   .tag.tipo          { margin-left: 6px; opacity: .92; }
+
+  /* eventos já realizados aparecem mais discretos no calendário */
+  .ev.realizada { opacity: .55; }
+  /* cards realizados levemente esmaecidos */
+  .card.realizada { opacity: .8; }
 
   /* botão de excluir (só aparece no modo organizadora) */
   .btn-excluir {
@@ -434,6 +441,9 @@
   <h2 class="secao-titulo">⏳ Ações a confirmar</h2>
   <div class="cards" id="aconfirmar"></div>
 
+  <h2 class="secao-titulo">✅ Ações realizadas</h2>
+  <div class="cards" id="realizadas"></div>
+
   <footer>
     Todos os direitos reservados | Projeto Menstrua
     <br/>
@@ -493,6 +503,7 @@
     <select id="f-status">
       <option value="confirmada">Confirmada</option>
       <option value="aconfirmar">A confirmar</option>
+      <option value="realizada">Realizada</option>
     </select>
 
     <label for="f-detalhes">Detalhes da ação <span style="font-weight:400;color:#999">(opcional)</span></label>
@@ -545,9 +556,6 @@ let editandoId = null;   // id da atividade em edição (null = criando nova)
    TÍTULOS / LEGENDA
    ============================================================ */
 document.getElementById("subtitulo").textContent = PROJETO.subtitulo;
-document.getElementById("atualizado").textContent =
-  "Atualizado em " + (PROJETO.atualizadoEm || "");
-
 const legenda = document.getElementById("legenda");
 for (const k in TIPOS) {
   const t = TIPOS[k];
@@ -592,6 +600,7 @@ function renderTudo() {
   renderCalendario();
   renderProximas();
   renderAConfirmar();
+  renderRealizadas();
 }
 
 function renderCalendario() {
@@ -617,7 +626,8 @@ function renderCalendario() {
     let evHtml = "";
     eventosDoDia.forEach(a => {
       const podeEditar = modoAdmin && online && a.id;
-      evHtml += `<div class="ev ${podeEditar ? "editavel" : ""}" ${podeEditar ? `data-editar="${a.id}" title="Clique para editar"` : ""} style="background:${corTipo(a.tipo)}">
+      const ehRealizada = a.status === "realizada";
+      evHtml += `<div class="ev ${podeEditar ? "editavel" : ""} ${ehRealizada ? "realizada" : ""}" ${podeEditar ? `data-editar="${a.id}" title="Clique para editar"` : ""} style="background:${corTipo(a.tipo)}">
                    <b>${a.hora ? escapeHtml(a.hora)+" " : ""}${escapeHtml(a.cidade)}</b>
                    <span class="resp">${a.responsavel ? "👤 "+escapeHtml(a.responsavel) : nomeTipo(a.tipo)}</span>
                  </div>`;
@@ -629,16 +639,21 @@ function renderCalendario() {
   }
 }
 
+function statusTagHtml(status) {
+  if (status === "realizada")  return `<span class="tag status-real">✅ Realizada</span>`;
+  if (status === "aconfirmar") return `<span class="tag status-aconf">⏳ A confirmar</span>`;
+  return `<span class="tag status-conf">✔ Confirmada</span>`;
+}
+
 function cardHtml(a) {
   const dataBadge = a.data ? `<span class="data-badge">${formatarData(parseData(a.data))}</span>` : "";
-  const statusTag = a.status === "confirmada"
-    ? `<span class="tag status-conf">✔ Confirmada</span>`
-    : `<span class="tag status-aconf">⏳ A confirmar</span>`;
+  const statusTag = statusTagHtml(a.status);
   const podeEditar = modoAdmin && online && a.id;
+  const ehRealizada = a.status === "realizada";
   const excluir = podeEditar
     ? `<button class="btn-excluir" title="Excluir" data-excluir="${a.id}">×</button>` : "";
   return `
-    <div class="card ${podeEditar ? "editavel" : ""}" ${podeEditar ? `data-editar="${a.id}" title="Clique para editar"` : ""} style="border-left-color:${corTipo(a.tipo)}">
+    <div class="card ${podeEditar ? "editavel" : ""} ${ehRealizada ? "realizada" : ""}" ${podeEditar ? `data-editar="${a.id}" title="Clique para editar"` : ""} style="border-left-color:${corTipo(a.tipo)}">
       ${excluir}
       ${dataBadge}
       <h3>${escapeHtml(a.cidade)}</h3>
@@ -669,6 +684,21 @@ function renderAConfirmar() {
   cont.innerHTML = lista.length
     ? lista.map(cardHtml).join("")
     : "<p style='color:#999'>Nenhuma ação pendente.</p>";
+}
+
+function renderRealizadas() {
+  const cont = document.getElementById("realizadas");
+  const lista = atividades
+    .filter(a => a.status === "realizada")
+    .sort((a,b) => {
+      // mais recentes primeiro; sem data vão para o fim
+      if (!a.data) return 1;
+      if (!b.data) return -1;
+      return parseData(b.data) - parseData(a.data);
+    });
+  cont.innerHTML = lista.length
+    ? lista.map(cardHtml).join("")
+    : "<p style='color:#999'>Nenhuma ação realizada ainda.</p>";
 }
 
 function escapeHtml(s){

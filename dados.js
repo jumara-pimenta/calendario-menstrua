@@ -17,14 +17,13 @@
    - local:       detalhe do lugar (ex: "Rua", "UFAM"). Pode deixar "".
    - tipo:        "rua" | "universidade" | "indigena" | "centropop" | "outro"
    - responsavel: nome da voluntária responsável (ex: "Drica"). Pode deixar "".
-   - status:      "confirmada" | "aconfirmar"
+   - status:      "confirmada" | "aconfirmar" | "realizada"
    ===================================================================== */
 
 const PROJETO = {
   nome: "MENSTRUA",
   subtitulo: "Calendário de Ações e Atividades",
   // Aparece no rodapé. Atualize a data quando fizer mudanças, se quiser.
-  atualizadoEm: "05/06/2026"
 };
 
 const ATIVIDADES = [
